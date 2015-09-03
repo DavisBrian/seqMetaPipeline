@@ -1,3 +1,4 @@
+#' @export
 checkGenotypeMatrix <- function(Z) {
   if (!is.matrix(Z)) {
     stop("Genotype must be in a numeric matrix.")

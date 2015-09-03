@@ -1,2 +1,5 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^README.Rmd$
+^*./R/seqMetaExample.R
+^*./R/seqMetaExampleTest.R
