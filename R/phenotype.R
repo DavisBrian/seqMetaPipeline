@@ -66,43 +66,71 @@
 #  -add "family" (gaussian/binomial/survival)
 #  -add print method to show the meta data
 #  -add "problems" (a la readr)
-phenotype <- function(data, formula=NULL, family=NULL, id=NULL, gender=NULL, 
+phenotype <- function(data, formula, family, id=NULL, gender=NULL, 
                       include=NULL, exclude=NULL) {
   
-  if(is.data.frame(data)) {
+  # check data
+  if (is.data.frame(data)) {
     old_class <- class(data)
     old_attribures <- attributes(data)
   } else {
-    stop("data must be a data.frame or a class which extends a data.frame.")
+    stop("Error in parameter 'data': Must be a data.frame or a class which extends a data.frame.")
   }
   
-  # [TBD] check column names are in data
-  cols <- colnames(get_all_vars(formula, data))
+  # check formula
+  if (missing(formula)) {
+    stop("'formula' must be specified!")
+  }
+  # - make sure all varaibles are in the data frame
+  vars <- all.vars(as.formula(formula))
+  vars <- vars[!(vars %in% ".")]
+  if (!all(vars %in% colnames(data))) {
+    stop("Error in parameter 'formula': One or more formula variables not in data")
+  }
   
-  # [TBD] check formula
-  #        - make sure all varaibles are in the data frame
-  #        - make sure after na.omit there are rows
-  #        - make sure a basic model.frame can be made ???
+  mf <- get_all_vars(formula, data)
+  if (nrow(na.omit(mf)) <= 1L) {
+    stop("Error: 'formula' results in 'data' having no data")
+  }
+
   
-  # [TBD] check family
-  #        - if "gaussian" response is_numeric
-  #        - if "binomial" response is_dicotomous
-  #        - if "survival" ???
-  #        - make sure formula can be run with the family argument
+  # check family
+  if (missing(family)) {
+    stop("'family' must be specified!")
+  }
+  if (is.character(family)) {
+    if (length(family) != 1L) {
+      stop("Family can be only one of: 'gaussian', 'binomial', or 'cox'")
+    }
+    
+    nullmodel <- if (family == "binomial" || family == "gaussian") {
+      try(glm(formula = formula, family = family, data = data))
+    } else if (family == "cox") {
+      try(coxph(formula = formula, data = data))
+    } else {
+      stop("Unknown family type.  Only 'gaussian', 'binomial', and 'cox' are currently supported.")
+    }
+    if (is_try_error(nullmodel)) {
+      stop("nullmodel can not be built.")
+    }
+  } else {
+    stop("'family' must be of type character")
+  }
+
   
   # [TBD] check check id
   #        - if not given make the rownames a column (.id) and set idCol
   #        - make sure they are characters
   #        - make sure they are unique
   #        - set idCol
-  cols <- unique(c(cols, id))
-  subjects_all <- data[ , id]
+#  cols <- unique(c(cols, id))
+#  subjects_all <- data[ , id]
   
   # [TBD] check check gender
   #        - is a type than can be grouped
   #        - has no more than 2 groups
   #        - can be converted to TRUE/FALSE??
-  cols <- unique(c(cols, gender))
+#  cols <- unique(c(cols, gender))
   
   # [TBD] check check include
   #        - the subjects are in the dataset
@@ -112,36 +140,36 @@ phenotype <- function(data, formula=NULL, family=NULL, id=NULL, gender=NULL,
   
   # include / exclude    
   
-  if (!is.null(include)) {
-    subjects <- intersect(include, data[ , id])
-    data <- data[(data[, id] %in% subjects), , drop = FALSE]
-  }
-  
-  # exclude
-  if (!is.null(exclude)) {
-    subjects <- setdiff(data[ , id], exclude)
-    data <- data[(data[, id] %in% subjects), , drop = FALSE]
-  }
-  
-  data <- na.omit(data[ , cols])
-  
-  subjects_include <- data[ , id]
-  
-  subjects_exclude <- setdiff(subjects_all, subjects_include)
-  if (length(subjects_exclude) == 0L) {
-    subjects_exclude <- NULL
-  }
-  
+#   if (!is.null(include)) {
+#     subjects <- intersect(include, data[ , id])
+#     data <- data[(data[, id] %in% subjects), , drop = FALSE]
+#   }
+#   
+#   # exclude
+#   if (!is.null(exclude)) {
+#     subjects <- setdiff(data[ , id], exclude)
+#     data <- data[(data[, id] %in% subjects), , drop = FALSE]
+#   }
+#   
+#   data <- na.omit(data[ , cols])
+#   
+#   subjects_include <- data[ , id]
+#   
+#   subjects_exclude <- setdiff(subjects_all, subjects_include)
+#   if (length(subjects_exclude) == 0L) {
+#     subjects_exclude <- NULL
+#   }
+#   
   new_class <- class(data)
   
   structure(
     data,
     formula = formula,
     family = family,
-    idCol = id,
-    genderCol = gender,
-    included = subjects_include,
-    excluded = subjects_exclude,
+#    idCol = id,
+#    genderCol = gender,
+#    included = subjects_include,
+#    excluded = subjects_exclude,
     class = unique(c("phenotype", new_class))
   )
 }

@@ -1,3 +1,5 @@
+is_try_error <- function(x) inherits(x, "try-error")
+
 # This Calculates the MAC without imputing missing values from the cohort
 # object and the phenotype data used.  This is done by first calling
 # AddMACtoSNPInfo and adding the MAC from the current model to the snpinfo file

@@ -5,8 +5,8 @@
 \alias{phenotype}
 \title{Create a phenotype object}
 \usage{
-phenotype(data, formula = NULL, family = NULL, id = NULL, gender = NULL,
-  include = NULL, exclude = NULL)
+phenotype(data, formula, family, id = NULL, gender = NULL, include = NULL,
+  exclude = NULL)
 
 is_phenotype(x)
 }
