@@ -8,6 +8,7 @@
 #' @name seqMetaPipeline
 #' @docType package
 #' @import seqMeta plyr gap
+#' @importFrom survival coxph
 NULL
 
 

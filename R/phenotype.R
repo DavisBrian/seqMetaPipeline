@@ -66,14 +66,11 @@
 #  -add "family" (gaussian/binomial/survival)
 #  -add print method to show the meta data
 #  -add "problems" (a la readr)
-phenotype <- function(data, formula, family, id=NULL, gender=NULL, 
+phenotype <- function(data, formula, family, id, gender=NULL, 
                       include=NULL, exclude=NULL) {
   
   # check data
-  if (is.data.frame(data)) {
-    old_class <- class(data)
-    old_attribures <- attributes(data)
-  } else {
+  if (!is.data.frame(data)) {
     stop("Error in parameter 'data': Must be a data.frame or a class which extends a data.frame.")
   }
   
@@ -102,7 +99,6 @@ phenotype <- function(data, formula, family, id=NULL, gender=NULL,
     if (length(family) != 1L) {
       stop("Family can be only one of: 'gaussian', 'binomial', or 'cox'")
     }
-    
     nullmodel <- if (family == "binomial" || family == "gaussian") {
       try(glm(formula = formula, family = family, data = data))
     } else if (family == "cox") {
@@ -114,43 +110,80 @@ phenotype <- function(data, formula, family, id=NULL, gender=NULL,
       stop("nullmodel can not be built.")
     }
   } else {
-    stop("'family' must be of type character")
+    stop("'family' must be of type character.")
   }
 
+  # check id
+  if (missing(id)) {
+    id <- ".id"
+    data$.id <- rownames(data)
+  } else {
+    if (length(id) != 1L) {
+      stop("Only one id column can be specified.")
+    } else {
+      if (!(id %in% colnames(data))) {
+        stop(paste0(id, " is not a column in data."))
+      }
+    }
+    if (!is.character(data[ , id])) {
+      warning("Converting id column to character.")
+      data[ , id] <- as.character(data[ , id]) 
+    }
+    if (anyDuplicated(data[ , id])) {
+      stop("Duplicate phenotype ids found.")
+    }
+    if (anyNA(data[ , id])) {
+      stop("Missing phenotype ids")
+    }
+  }
+
+  # check gender
+  if (!is.null(gender)) {
+    if (length(id) != 1L) {
+      stop("Only one id column can be specified.")
+    } else {
+      if (!(id %in% colnames(data))) {
+        stop(paste0(id, " is not a column in data."))
+      }
+    }
+    if (anyNA(data[ , gender])) {
+      stop("Missing gender data")
+    }
+    # [TBD]  - is a type than can be grouped
+    # [TBD] - has no more than 2 groups
+    # [TBD] - can be converted to TRUE/FALSE??
+  }
+
+  subjects_all <- data[ , id]
   
-  # [TBD] check check id
-  #        - if not given make the rownames a column (.id) and set idCol
-  #        - make sure they are characters
-  #        - make sure they are unique
-  #        - set idCol
-#  cols <- unique(c(cols, id))
-#  subjects_all <- data[ , id]
+  # check include
+  if (!is.null(include)) {
+    if(!is.character(include)) {
+      stop("include must be a character vector")
+    }
+    if (!all(include %in% data[ ,id])) {
+      warning("Not all ids in 'include' are in 'data'")
+    }
+    if (!all(include %in% data[ ,id])) {
+      warning("Not all ids in 'include' are in 'data'")
+    }
+    subjects <- intersect(include, data[ , id])    
+    data <- data[(data[, id] %in% subjects), , drop = FALSE]
+  }
+
+  # check include
+  if (!is.null(exclude)) {
+    if(!is.character(exclude)) {
+      stop("exclude must be a character vector")
+    }
+    if (!all(exclude %in% data[ ,id])) {
+      warning("Not all ids in 'exclude' are in 'data'")
+    }
+    subjects <- setdiff(data[ , id], exclude)
+    data <- data[(data[, id] %in% subjects), , drop = FALSE]
+  }
   
-  # [TBD] check check gender
-  #        - is a type than can be grouped
-  #        - has no more than 2 groups
-  #        - can be converted to TRUE/FALSE??
-#  cols <- unique(c(cols, gender))
-  
-  # [TBD] check check include
-  #        - the subjects are in the dataset
-  
-  # [TBD] check check exclude
-  #        - the subjects are in the dataset
-  
-  # include / exclude    
-  
-#   if (!is.null(include)) {
-#     subjects <- intersect(include, data[ , id])
-#     data <- data[(data[, id] %in% subjects), , drop = FALSE]
-#   }
-#   
-#   # exclude
-#   if (!is.null(exclude)) {
-#     subjects <- setdiff(data[ , id], exclude)
-#     data <- data[(data[, id] %in% subjects), , drop = FALSE]
-#   }
-#   
+
 #   data <- na.omit(data[ , cols])
 #   
 #   subjects_include <- data[ , id]
@@ -166,10 +199,10 @@ phenotype <- function(data, formula, family, id=NULL, gender=NULL,
     data,
     formula = formula,
     family = family,
-#    idCol = id,
-#    genderCol = gender,
-#    included = subjects_include,
-#    excluded = subjects_exclude,
+    idCol = id,
+    genderCol = gender,
+    included = subjects_include,
+    excluded = subjects_exclude,
     class = unique(c("phenotype", new_class))
   )
 }
