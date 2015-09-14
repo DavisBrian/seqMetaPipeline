@@ -92,22 +92,15 @@ phenotype <- function(data, formula, family, id, gender=NULL,
 
   
   # check family
-  if (missing(family)) {
+  if (missing(family) || is.null(family) || length(family) == 0L || is.na(family)) {
     stop("'family' must be specified!")
   }
   if (is.character(family)) {
-    if (length(family) != 1L) {
+    if (length(family) > 1L) {
       stop("Family can be only one of: 'gaussian', 'binomial', or 'cox'")
     }
-    nullmodel <- if (family == "binomial" || family == "gaussian") {
-#      try(glm(formula = as.formula(formula), family = family, data = data))
-    } else if (family == "cox") {
-      try(coxph(formula = as.formula(formula), data = data))
-    } else {
-      stop("Unknown family type.  Only 'gaussian', 'binomial', and 'cox' are currently supported.")
-    }
-    if (is_try_error(nullmodel)) {
-      stop("nullmodel can not be built.")
+    if (!all(family %in% c('gaussian', 'binomial', 'cox'))) {
+      stop("Only family 'gaussian', 'binomial', or 'cox' currently supported")
     }
   } else {
     stop("'family' must be of type character.")
@@ -183,7 +176,19 @@ phenotype <- function(data, formula, family, id, gender=NULL,
     data <- data[(data[, id] %in% subjects), , drop = FALSE]
   }
   
-
+  # check null model can be built with the parameters given.
+  
+#   nullmodel <- if (family == "binomial" || family == "gaussian") {
+#     try(glm(formula = as.formula(formula), family = family, data = data[ , -idCol]))
+#   } else if (family == "cox") {
+#     try(coxph(formula = as.formula(formula), data = data[ , -idCol]))
+#   } else {
+#     stop("Unknown family type.  Only 'gaussian', 'binomial', and 'cox' are currently supported.")
+#   }
+#   if (is_try_error(nullmodel)) {
+#     stop("nullmodel can not be built.")
+#   }
+  
 #   data <- na.omit(data[ , cols])
 #   
 #   subjects_include <- data[ , id]
