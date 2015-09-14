@@ -81,13 +81,13 @@ phenotype <- function(data, formula, family, id, gender=NULL,
   # - make sure all varaibles are in the data frame
   vars <- all.vars(as.formula(formula))
   vars <- vars[!(vars %in% ".")]
-  if (!all(vars %in% colnames(data))) {
-    stop("Error in parameter 'formula': One or more formula variables not in data")
-  }
-  
-  mf <- get_all_vars(formula, data)
-  if (nrow(na.omit(mf)) <= 1L) {
-    stop("Error: 'formula' results in 'data' having no data")
+  if (all(vars %in% colnames(data))) {
+    mf <- get_all_vars(formula, data)
+    if (nrow(na.omit(mf)) <= 1L) {
+      stop("'formula' results in empty 'data'")
+    }
+  } else {
+    stop("One or more formula variables not in data")
   }
 
   
@@ -100,9 +100,9 @@ phenotype <- function(data, formula, family, id, gender=NULL,
       stop("Family can be only one of: 'gaussian', 'binomial', or 'cox'")
     }
     nullmodel <- if (family == "binomial" || family == "gaussian") {
-      try(glm(formula = formula, family = family, data = data))
+#      try(glm(formula = as.formula(formula), family = family, data = data))
     } else if (family == "cox") {
-      try(coxph(formula = formula, data = data))
+      try(coxph(formula = as.formula(formula), data = data))
     } else {
       stop("Unknown family type.  Only 'gaussian', 'binomial', and 'cox' are currently supported.")
     }
@@ -158,7 +158,7 @@ phenotype <- function(data, formula, family, id, gender=NULL,
   
   # check include
   if (!is.null(include)) {
-    if(!is.character(include)) {
+    if (!is.character(include)) {
       stop("include must be a character vector")
     }
     if (!all(include %in% data[ ,id])) {
@@ -167,19 +167,19 @@ phenotype <- function(data, formula, family, id, gender=NULL,
     if (!all(include %in% data[ ,id])) {
       warning("Not all ids in 'include' are in 'data'")
     }
-    subjects <- intersect(include, data[ , id])    
+    subjects_include <- intersect(include, data[ , id])    
     data <- data[(data[, id] %in% subjects), , drop = FALSE]
   }
 
-  # check include
+  # check exclude
   if (!is.null(exclude)) {
-    if(!is.character(exclude)) {
+    if (!is.character(exclude)) {
       stop("exclude must be a character vector")
     }
     if (!all(exclude %in% data[ ,id])) {
       warning("Not all ids in 'exclude' are in 'data'")
     }
-    subjects <- setdiff(data[ , id], exclude)
+    subjects_exclude <- setdiff(data[ , id], exclude)
     data <- data[(data[, id] %in% subjects), , drop = FALSE]
   }
   
@@ -195,16 +195,25 @@ phenotype <- function(data, formula, family, id, gender=NULL,
 #   
   new_class <- class(data)
   
-  structure(
-    data,
-    formula = formula,
-    family = family,
-    idCol = id,
-    genderCol = gender,
-    included = subjects_include,
-    excluded = subjects_exclude,
-    class = unique(c("phenotype", new_class))
-  )
+#   structure(
+#     data,
+#     formula = formula,
+#     family = family,
+#     idCol = id,
+#     genderCol = gender,
+#     included = subjects_include,
+#     excluded = subjects_exclude,
+#     class = unique(c("phenotype", new_class))
+#   )
+    structure(
+      data,
+      formula = formula,
+      family = family,
+      idCol = id,
+      genderCol = gender,
+      class = unique(c("phenotype", new_class))
+    )
+  
 }
 
 #' @rdname phenotype
