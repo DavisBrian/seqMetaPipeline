@@ -108,6 +108,7 @@ phenotype <- function(data, formula, family, id, gender=NULL,
 
   # check id
   if (missing(id)) {
+    warning("id not specified.  Using row names")
     id <- ".id"
     data$.id <- rownames(data)
   } else {
