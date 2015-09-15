@@ -2,7 +2,7 @@ context("phenotype")
 
 data(pheno1)
 
-test_that("formula checking)", {
+test_that("formula checking", {
   expect_error(phenotype(pheno1, formula = "y ~ AGE", family = "gaussian", 
                          id = "id"), 
                regexp = "One or more formula variables not in data")
@@ -14,7 +14,7 @@ test_that("formula checking)", {
                       family = "gaussian", id = "id"), "phenotype")
 })
 
-test_that("family checking)", {
+test_that("family checking", {
   expect_is(phenotype(pheno1, formula = "y ~ age + pc1 + pc2", 
                       family = "gaussian", id = "id"), "phenotype")
   expect_is(phenotype(pheno1, formula = "y ~ age + pc1 + pc2", 
@@ -49,7 +49,7 @@ test_that("family checking)", {
                regexp = "Family can be only one of: 'gaussian', 'binomial', or 'cox'")
 })
 
-test_that("family id)", {
+test_that("id checking", {
   # id col specified
   expect_is(pheno <- phenotype(pheno1, formula = "y ~ age + pc1 + pc2", 
                       family = "gaussian", id = "id"), "phenotype")
@@ -100,4 +100,36 @@ test_that("family id)", {
   expect_warning(phenotype(p4, formula = "y ~ age + pc1 + pc2", 
                          family = "gaussian", id = "id"), 
                regexp = "Converting id column to character")  
+})
+
+test_that("gender checking", {
+  # gender col missing
+  expect_is(pheno <- phenotype(pheno1, formula = "y ~ age + pc1 + pc2", 
+                               family = "gaussian", id = "id"), "phenotype")
+  expect_equal(attr(pheno, "genderCol"), NULL)
+
+  # gender col mis-specified
+  expect_error(pheno <- phenotype(pheno1, formula = "y ~ age + pc1 + pc2", 
+                               family = "gaussian", id = "id", gender = "sex"), 
+            regexp = "is not a column in data")  
+    
+  p <- pheno1
+  p$sex <- sample(c("F", "M"), size = nrow(p), replace = TRUE)
+  # gender col specified 
+  expect_is(pheno <- phenotype(p, formula = "y ~ age + pc1 + pc2", 
+                               family = "gaussian", id = "id", gender = "sex"), 
+            "phenotype")
+  expect_equal(attr(pheno, "genderCol"), "sex")
+  
+  # multiple gender cols specified
+  expect_error(pheno <- phenotype(p, formula = "y ~ age + pc1 + pc2", 
+                                  family = "gaussian", id = "id", gender = c("sex", "y")), 
+               regexp = "Only one gender column can be specified")  
+  
+  # missing gender's
+  p[floor(nrow(p)/2), "sex"] <- NA
+  expect_error(pheno <- phenotype(p, formula = "y ~ age + pc1 + pc2", 
+                                  family = "gaussian", id = "id", gender = "sex"), 
+               regexp = "Missing gender data")  
+  
 })

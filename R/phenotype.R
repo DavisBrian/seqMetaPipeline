@@ -66,7 +66,7 @@
 #  -add "family" (gaussian/binomial/survival)
 #  -add print method to show the meta data
 #  -add "problems" (a la readr)
-phenotype <- function(data, formula, family, id, gender=NULL, 
+phenotype <- function(data, formula, family, id, gender, 
                       include=NULL, exclude=NULL) {
   
   # check data
@@ -132,12 +132,14 @@ phenotype <- function(data, formula, family, id, gender=NULL,
   }
 
   # check gender
-  if (!is.null(gender)) {
-    if (length(id) != 1L) {
-      stop("Only one id column can be specified.")
+  if (missing(gender)) {
+    gender <- NULL
+  } else {
+    if (length(gender) != 1L) {
+      stop("Only one gender column can be specified.")
     } else {
-      if (!(id %in% colnames(data))) {
-        stop(paste0(id, " is not a column in data."))
+      if (!(gender %in% colnames(data))) {
+        stop(paste0(gender, " is not a column in data."))
       }
     }
     if (anyNA(data[ , gender])) {
@@ -145,9 +147,10 @@ phenotype <- function(data, formula, family, id, gender=NULL,
     }
     # [TBD]  - is a type than can be grouped
     # [TBD] - has no more than 2 groups
-    # [TBD] - can be converted to TRUE/FALSE??
+    # [TBD] - can be converted to TRUE/FALSE??    
   }
 
+  
   subjects_all <- data[ , id]
   
   # check include
