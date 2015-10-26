@@ -63,11 +63,10 @@
 # [TBD]
 #  -verbose option?
 #  -add genderChar??? something to demote which character is "MALE/FEMALE"
-#  -add "family" (gaussian/binomial/survival)
 #  -add print method to show the meta data
 #  -add "problems" (a la readr)
 phenotype <- function(data, formula, family, id, gender, 
-                      include=NULL, exclude=NULL) {
+                      include, exclude) {
   
   # check data
   if (!is.data.frame(data)) {
@@ -154,22 +153,19 @@ phenotype <- function(data, formula, family, id, gender,
   subjects_all <- data[ , id]
   
   # check include
-  if (!is.null(include)) {
+  if (!missing(include)) {
     if (!is.character(include)) {
       stop("include must be a character vector")
     }
     if (!all(include %in% data[ ,id])) {
       warning("Not all ids in 'include' are in 'data'")
     }
-    if (!all(include %in% data[ ,id])) {
-      warning("Not all ids in 'include' are in 'data'")
-    }
     subjects_include <- intersect(include, data[ , id])    
-    data <- data[(data[, id] %in% subjects), , drop = FALSE]
+    data <- data[(data[, id] %in% subjects_include), , drop = FALSE]
   }
 
   # check exclude
-  if (!is.null(exclude)) {
+  if (!missing(exclude)) {
     if (!is.character(exclude)) {
       stop("exclude must be a character vector")
     }
@@ -203,26 +199,17 @@ phenotype <- function(data, formula, family, id, gender,
 #   }
 #   
   new_class <- class(data)
-  
-#   structure(
-#     data,
-#     formula = formula,
-#     family = family,
-#     idCol = id,
-#     genderCol = gender,
-#     included = subjects_include,
-#     excluded = subjects_exclude,
-#     class = unique(c("phenotype", new_class))
-#   )
-    structure(
-      data,
-      formula = formula,
-      family = family,
-      idCol = id,
-      genderCol = gender,
-      class = unique(c("phenotype", new_class))
-    )
-  
+
+  structure(
+    data,
+    formula = formula,
+    family = family,
+    idCol = id,
+    genderCol = gender,
+    included = data[, id],
+    excluded = setdiff(subjects_all, data[, id]),
+    class = unique(c("phenotype", new_class))
+  )
 }
 
 #' @rdname phenotype
