@@ -133,3 +133,23 @@ test_that("gender checking", {
                regexp = "Missing gender data")  
   
 })
+
+test_that("include checking", { 
+  ids <- c("id3557", "id305") 
+  p <- phenotype(pheno1, formula = "y~1", family = "gaussian", id = "id", 
+                 include = ids)
+  
+  expect_equal(get_included(p), ids)
+  expect_equal(p[ , get_idCol(p)], ids)
+  
+  expect_warning(p2 <- phenotype(pheno1, formula = "y~1", family = "gaussian", 
+                                 id = "id", 
+                                 include = c("id3557", "id305", "SAMPLE1")))
+  
+  expect_equal(get_included(p2), ids)
+  expect_equal(p2[ , get_idCol(p2)], ids)
+  
+})
+
+
+
