@@ -152,4 +152,34 @@ test_that("include checking", {
 })
 
 
+test_that("exclude checking", { 
+  ids <- c("id3557", "id305") 
+  p <- phenotype(pheno1, formula = "y~1", family = "gaussian", id = "id", 
+                 exclude = ids)
+  
+  expect_equal(get_excluded(p), ids)
+  expect_equal(any(p[ , get_idCol(p)] %in% ids), FALSE)
+  
+  expect_warning(p2 <- phenotype(pheno1, formula = "y~1", family = "gaussian", 
+                                 id = "id", 
+                                 exclude = c("id3557", "id305", "SAMPLE1")))
+  
+  expect_equal(get_excluded(p2), ids)
+  expect_equal(any(p2[ , get_idCol(p2)] %in% ids), FALSE)
+  
+})
 
+test_that("include-exclude checking", { 
+  ids_include <- c("id3557", "id305", "id2977", "id4292") 
+  ids_exclude <- c("id305") 
+  p <- phenotype(pheno1, formula = "y~1", family = "gaussian", id = "id", 
+                 include = ids_include, exclude = ids_exclude)
+  
+  ids <- setdiff(ids_include, ids_exclude)
+  
+  expect_equal(sort(get_included(p)), sort(ids))
+  expect_equal(sort(get_excluded(p)), sort(setdiff(pheno1$id, ids)))
+  
+})
+
+  

@@ -173,7 +173,7 @@ phenotype <- function(data, formula, family, id, gender,
       warning("Not all ids in 'exclude' are in 'data'")
     }
     subjects_exclude <- setdiff(data[ , id], exclude)
-    data <- data[(data[, id] %in% subjects), , drop = FALSE]
+    data <- data[(data[, id] %in% subjects_exclude), , drop = FALSE]
   }
   
   # check null model can be built with the parameters given.
