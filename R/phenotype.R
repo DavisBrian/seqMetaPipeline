@@ -61,6 +61,7 @@
 #' @export
 #
 # [TBD]
+#  -Do we auto drop missing values?
 #  -verbose option?
 #  -add genderChar??? something to demote which character is "MALE/FEMALE"
 #  -add print method to show the meta data
@@ -82,6 +83,7 @@ phenotype <- function(data, formula, family, id, gender,
   vars <- vars[!(vars %in% ".")]
   if (all(vars %in% colnames(data))) {
     mf <- get_all_vars(formula, data)
+    vars <- colnames(mf)
     if (nrow(na.omit(mf)) <= 1L) {
       stop("'formula' results in empty 'data'")
     }
@@ -89,7 +91,6 @@ phenotype <- function(data, formula, family, id, gender,
     stop("One or more formula variables not in data")
   }
 
-  
   # check family
   if (missing(family) || is.null(family) || length(family) == 0L || is.na(family)) {
     stop("'family' must be specified!")
@@ -129,6 +130,7 @@ phenotype <- function(data, formula, family, id, gender,
       stop("Missing phenotype ids")
     }
   }
+  idCol <- match(id, colnames(data))
 
   # check gender
   if (missing(gender)) {
@@ -177,29 +179,17 @@ phenotype <- function(data, formula, family, id, gender,
   }
   
   # check null model can be built with the parameters given.
+  nullmodel <- if (family == "binomial" || family == "gaussian") {
+    try(glm(formula = as.formula(formula), family = family, data = data[ , -idCol]))
+  } else if (family == "cox") {
+    try(coxph(formula = as.formula(formula), data = data[ , -idCol]))
+  } else {
+    stop("Unknown family type.  Only 'gaussian', 'binomial', and 'cox' are currently supported.")
+  }
+  if (is_try_error(nullmodel)) {
+    stop("nullmodel can not be built.")
+  }
   
-#   nullmodel <- if (family == "binomial" || family == "gaussian") {
-#     try(glm(formula = as.formula(formula), family = family, data = data[ , -idCol]))
-#   } else if (family == "cox") {
-#     try(coxph(formula = as.formula(formula), data = data[ , -idCol]))
-#   } else {
-#     stop("Unknown family type.  Only 'gaussian', 'binomial', and 'cox' are currently supported.")
-#   }
-#   if (is_try_error(nullmodel)) {
-#     stop("nullmodel can not be built.")
-#   }
-  
-#   data <- na.omit(data[ , cols])
-#   
-#   subjects_include <- data[ , id]
-#   
-#   subjects_exclude <- setdiff(subjects_all, subjects_include)
-#   if (length(subjects_exclude) == 0L) {
-#     subjects_exclude <- NULL
-#   }
-#   
-  new_class <- class(data)
-
   structure(
     data,
     formula = formula,
@@ -208,7 +198,7 @@ phenotype <- function(data, formula, family, id, gender,
     genderCol = gender,
     included = data[, id],
     excluded = setdiff(subjects_all, data[, id]),
-    class = unique(c("phenotype", new_class))
+    class = unique(c("phenotype", class(data)))
   )
 }
 

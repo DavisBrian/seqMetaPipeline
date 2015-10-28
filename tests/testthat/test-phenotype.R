@@ -2,6 +2,9 @@ context("phenotype")
 
 data(pheno1)
 
+pheno2 <- pheno1
+pheno2$y <- sample(c(0,1), size = nrow(pheno1), replace = TRUE)
+
 test_that("formula checking", {
   expect_error(phenotype(pheno1, formula = "y ~ AGE", family = "gaussian", 
                          id = "id"), 
@@ -17,10 +20,13 @@ test_that("formula checking", {
 test_that("family checking", {
   expect_is(phenotype(pheno1, formula = "y ~ age + pc1 + pc2", 
                       family = "gaussian", id = "id"), "phenotype")
-  expect_is(phenotype(pheno1, formula = "y ~ age + pc1 + pc2", 
+
+  expect_is(phenotype(pheno2, formula = "y ~ age + pc1 + pc2", 
                       family = "binomial", id = "id"), "phenotype")
-  expect_is(phenotype(pheno1, formula = "y ~ age + pc1 + pc2", 
-                      family = "cox", id = "id"), "phenotype")
+  
+#   expect_is(phenotype(pheno3, formula = "y ~ age + pc1 + pc2", 
+#                       family = "cox", id = "id"), "phenotype")   
+
   ## check missing family
   expect_error(phenotype(pheno1, formula = "y ~ age + pc1 + pc2", id = "id"), 
                regexp = "'family' must be specified!")
